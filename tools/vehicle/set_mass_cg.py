@@ -7,6 +7,7 @@
 
 모터 (--motor, 생략하면 px4)
   px4      : PX4 기본 x500. k 8.54858e-6, 최대 1000 rad/s → 모터당 0.87 kgf, 합계 3.49 kgf
+  air2216_low : air2216을 배터리 14.4 V + 손실 10 %로 낮춘 최악 조건 → 모터당 0.97 kgf, 합계 3.90 kgf
   air2216  : T-Motor AIR2216 II KV920 + T1045 II 공식 추력표(16 V, 30~100 %)에 T = k·ω² 맞춤 → k 1.2299e-5
              14.8 V 최대 회전 = 9,857 rpm × 14.8/16 = 9,118 rpm = 955 rad/s → 모터당 1.14 kgf, 합계 4.57 kgf
              반토크 계수 0.0140 (추력표 토크/추력)
@@ -52,6 +53,9 @@ MOTORS = {
     "px4": dict(name="PX4 기본 x500", k=8.54858e-06, wmax=1000.0, km=0.016, ec_min=150, ec_max=1000),
     "air2216": dict(name="AIR2216 II KV920 + T1045 II @14.8 V (T-Motor 공식 추력표)",
                     k=1.2299e-05, wmax=954.8, km=0.0140, ec_min=143, ec_max=955),
+    # 최악 조건: 배터리가 14.4 V(셀당 3.6 V)까지 떨어지고 배선·프롭 손실 10 % (발표 설계 기준과 같은 방식)
+    "air2216_low": dict(name="AIR2216 II @14.4 V, 손실 10 % (최악 조건)",
+                        k=1.2299e-05 * 0.9, wmax=954.8 * 14.4 / 14.8, km=0.0140, ec_min=139, ec_max=929),
 }
 
 
@@ -148,6 +152,7 @@ def main():
         sys.exit("run_mydrone_flow.sh 에서 THR_MDL_FAC 줄을 못 찾음")
     run = run.replace("# 우리 기체(x500_mydrone)",
                       f"# [set_mass_cg.py로 생성: 총 {total_g:.0f} g, 무게중심 x {cg_x:+.1f} mm, 모터 {motor_key}] 우리 기체(x500_mydrone)", 1)
+    run = run.replace("./build/px4_sitl_default/bin/px4\n", "./build/px4_sitl_default/bin/px4 ${PX4_ARGS:-}\n")
     RUN_TEST.write_text(run)
     RUN_TEST.chmod(0o755)
 

@@ -73,11 +73,38 @@ def model_setting():
     return mass, pose
 
 
+def margin_stats(u, t0, tp, alt, pos, mot):
+    """margin_test.py 전체 비행(공중 구간)의 여유: 모터 포화, 최대 기울기, 상승 속도, 고도·위치 넘침."""
+    air = alt > 0.3
+    ta, tb = tp[air][0], tp[air][-1]
+    L = ["", "[여유 시험 전체 비행] (급상승 2.5 m, 옆 이동 2 m @1.5 m/s 포함)"]
+    if mot is not None:
+        tm = (mot["timestamp"] - t0) / 1e6
+        m = (tm > ta) & (tm < tb)
+        c = np.vstack([mot[f"control[{i}]"][m] for i in range(4)])
+        sat = (c.max(axis=0) >= 0.95).mean() * 100
+        L.append(f"  모터 출력 최대 {c.max():.3f}, 최소 {c.min():.3f}, 0.95 이상(포화) 시간 {sat:.1f} %"
+                 + ("  ← 포화 있음: 이 무게는 급기동 여유 부족" if sat > 1 else ""))
+    att = topic(u, "vehicle_attitude_groundtruth") or topic(u, "vehicle_attitude")
+    tt = (att["timestamp"] - t0) / 1e6
+    m = (tt > ta) & (tt < tb)
+    r, pch = rp_deg(att["q[0]"][m], att["q[1]"][m], att["q[2]"][m], att["q[3]"][m])
+    L.append(f"  기울기 최대 {np.hypot(r, pch).max():.1f}°")
+    vz = -pos["vz"] if "vz" in pos else np.gradient(alt, tp)
+    L.append(f"  상승 속도 최대 {vz[air].max():.2f} m/s, 하강 최대 {(-vz[air]).max():.2f} m/s")
+    L.append(f"  최고 고도 {alt.max():.2f} m (목표 2.5 m, 넘친 양 {max(0.0, alt.max() - 2.5) * 100:.0f} cm)")
+    n = pos["x"] - pos["x"][0]
+    L.append(f"  북쪽 최대 이동 {n[air].max():.2f} m (목표 2.0 m, 넘친 양 {max(0.0, n[air].max() - 2.0) * 100:.0f} cm)")
+    return L
+
+
 def main():
     if len(sys.argv) < 2:
         sys.exit(__doc__)
-    tag = sys.argv[1]
-    path = Path(sys.argv[2]) if len(sys.argv) > 2 else latest_ulog()
+    args = [x for x in sys.argv[1:] if x != "--margin"]
+    margin = "--margin" in sys.argv
+    tag = args[0]
+    path = Path(args[1]) if len(args) > 1 else latest_ulog()
     out = REPO / "results" / tag
     out.mkdir(parents=True, exist_ok=True)
     u = ULog(str(path))
@@ -93,6 +120,8 @@ def main():
     if len(high) < 2:
         sys.exit("호버 구간을 못 찾음 (1.35 m 이상 비행 기록 없음)")
     a, b = high[0] + 5.0, high[-1] - 2.0          # 올라간 직후 5초, 내려가기 전 2초 제외
+    if margin:                                     # margin_test.py: 처음 1.5 m 호버 15초 중 가운데만
+        a, b = high[0] + 4.0, high[0] + 14.0
     if b - a < 5:
         sys.exit(f"호버 구간이 너무 짧음 ({b - a:.1f} s). hover_test.py 시간을 늘려 주세요")
     w = (tp > a) & (tp < b)
@@ -166,6 +195,9 @@ def main():
     L += ["", "[위치 흔들림] (호버 구간, " + src + ")",
           f"  수평: 평균에서 최대 {r.max() * 100:.1f} cm, RMS {math.sqrt((r ** 2).mean()) * 100:.1f} cm",
           f"  고도: 평균 {alt[w].mean():.2f} m, 표준편차 {alt[w].std() * 100:.1f} cm"]
+
+    if margin:
+        L += margin_stats(u, t0, tp, alt, pos, mot)
 
     text = "\n".join(L)
     print(text)

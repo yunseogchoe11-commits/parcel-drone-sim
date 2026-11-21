@@ -62,4 +62,4 @@ pkill -9 -f "gz sim"; sleep 1
 trap 'pkill -9 -f "gz sim"; echo "Gazebo 정리 완료"' EXIT
 
 cd ~/PX4-Autopilot
-PX4_SYS_AUTOSTART=4021 PX4_GZ_WORLD=${1:-auditorium} PX4_SIM_MODEL=gz_x500_mydrone ./build/px4_sitl_default/bin/px4
+PX4_SYS_AUTOSTART=4021 PX4_GZ_WORLD=${1:-auditorium} PX4_SIM_MODEL=gz_x500_mydrone ./build/px4_sitl_default/bin/px4 ${PX4_ARGS:-}

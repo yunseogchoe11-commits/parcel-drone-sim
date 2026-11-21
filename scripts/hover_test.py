@@ -12,6 +12,7 @@
 이륙·시동 방식은 mission_hdph.py와 같다 (GPS 없이 Offboard로 이륙).
 """
 import asyncio
+import os
 import sys
 import warnings
 
@@ -79,7 +80,11 @@ async def main():
     m.log("착륙 완료. SIM 터미널에서 pxh> shutdown 후 분석")
     for t in tasks:
         t.cancel()
+    # MAVSDK 연결이 남아 프로그램이 안 끝나는 경우가 있어 여기서 바로 종료 (착륙 후라 안전)
+    sys.stdout.flush()
+    os._exit(0)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
+    os._exit(0)

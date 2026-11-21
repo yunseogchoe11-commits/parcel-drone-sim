@@ -1,0 +1,29 @@
+시뮬 기체 설정 변경 (set_mass_cg.py 2200 -14.0 --motor air2216)
+
+[Gazebo 모델 x500_mydrone_base/model.sdf]
+  총무게         2600 g  ->     2200 g   (몸통 2.536 -> 2.136 kg)
+  무게중심 x    -14.0 mm ->    -14.0 mm  (y +0.1, z -49.6 mm 유지)
+  관성 Ixx=Iyy 0.02747 -> 0.02314, Izz 0.05072 -> 0.04272 (무게 비율 근사)
+
+[Gazebo 모터 x500_mydrone/model.sdf] AIR2216 II KV920 + T1045 II @14.8 V (T-Motor 공식 추력표)
+  motorConstant   1.10691e-05 -> 1.22990e-05
+  maxRotVelocity    929.0 ->   954.8 rad/s
+  momentConstant  0.0140 -> 0.0140
+  최대 추력 합계  3.90 -> 4.57 kgf  (모터당 1143 g)
+  예상 호버 추력  48.1 %  (= 총무게 / 최대 추력 합계)
+
+[PX4 파라미터 (tools/run_mydrone_flow_test.sh)]
+  CA_ROTOR0_PX    +0.192 -> +0.188   <- 변경
+  CA_ROTOR2_PX    +0.192 -> +0.188   <- 변경
+  CA_ROTOR1_PX    -0.156 -> -0.160   <- 변경
+  CA_ROTOR3_PX    -0.156 -> -0.160   <- 변경
+  EKF2_OF_POS_X   +0.098 -> +0.094   <- 변경
+  EKF2_RNG_POS_X  +0.098 -> +0.094   <- 변경
+  EKF2_IMU_POS_X  +0.018 -> +0.014   <- 변경
+  SIM_GZ_EC_MIN1~4  150 -> 143   <- 변경
+  SIM_GZ_EC_MAX1~4  1000 -> 955   <- 변경
+  THR_MDL_FAC     0.75 그대로 (EC_MIN/MAX를 같은 비율로 줄여 곡선 모양 유지)
+  MPC_THR_HOVER   그대로 (PX4가 비행 중 자동 추정)
+
+실행: bash tools/run_mydrone_flow_test.sh
+되돌리기: python3 tools/vehicle/set_mass_cg.py reset
