@@ -1,0 +1,1 @@
+-270  # 착지 때 바닥 높이 mm (base_link 기준). set_mass_cg.py --ground

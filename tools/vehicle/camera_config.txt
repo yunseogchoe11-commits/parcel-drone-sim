@@ -1,10 +1,10 @@
-x 0.12
+x 0.0
 y 0.0
-z -0.03
+z -0.144
 pitch 90.0
 yaw 0.0
-hfov 62.2
+hfov 90.0
 width 640
 height 480
 rate 15
-fx 530.47
+fx 320.00

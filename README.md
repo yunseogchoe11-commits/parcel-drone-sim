@@ -32,7 +32,7 @@ parcel-drone-sim/
 ## models — 기체와 바닥
 | 경로 | 역할 | 직접 수정 |
 |---|---|---|
-| x500_mydrone/model.sdf | (센서 위치는 `set_sensors.py`로) **모터 4개**(회전 방향, 최대 회전수, 추력 계수 — 11/20부터 실제 모터 AIR2216 II 값) + **광류 카메라·거리계** (앞 8 cm, 하판 아래 2 cm) + **아래쪽 카메라**(11/20, `set_camera.py`가 추가). 모터 값은 `tools/vehicle/set_mass_cg.py`가 고침 | 모터·카메라는 도구로 |
+| x500_mydrone/model.sdf | (센서 위치는 `set_sensors.py`로) **모터 4개**(회전 방향, 최대 회전수, 추력 계수 — 11/20부터 실제 모터 AIR2216 II 값) + **광류 카메라·거리계** (11/24부터 M3 앞-왼쪽 모터 아래: (169, 175, −5)·(189, 175, −5) mm) + **아래쪽 카메라**(`set_camera.py`가 추가, 11/24부터 그리퍼 하우징 아래 (0, 0, −144) mm, 120° 렌즈). 모터 값은 `tools/vehicle/set_mass_cg.py`가 고침 | 모터·카메라는 도구로 |
 | x500_mydrone/model.config | 모델 이름표 | X |
 | x500_mydrone/thumbnails/, LICENSE | PX4에서 복사된 부속 파일 | X |
 | x500_mydrone_base/model.sdf | **몸체**: 무게·무게중심·관성, 외형(기본 X500, 다리 포함), 로터 위치, 기본 센서(IMU, 기압계, 지자기, GPS). IMU는 FC 위치(하판 아랫면 위 36 mm) | 무게·무게중심·관성·로터 위치는 `tools/vehicle/set_mass_cg.py`가 자동 수정 (옛 방식: `cg_calc.py apply`) |
@@ -71,11 +71,12 @@ parcel-drone-sim/
 |---|---|---|
 | **parts.csv** | **부품 무게·위치 표** (무게중심 계산 입력) | — |
 | cg_calc.py | 무게중심 계산. `apply`를 붙이면 몸체 모델에 적용 | `python3 tools/vehicle/cg_calc.py apply` |
-| **set_mass_cg.py** | **총무게·무게중심 x·모터 한 번에 설정** → 두 model.sdf + run_mydrone_flow_test.sh. 모터 기본 `air2216`(실제 모터, 4.57 kgf), `air2216_low`(배터리 14.4 V + 손실 10 %, 3.90 kgf), `px4`(옛 모델 3.49 kgf). 옵션 `--inertia ixx iyy izz`(관성 직접), `--arm 0.177`(모터 위치) | `python3 tools/vehicle/set_mass_cg.py 2600 -11.9` (되돌리기: `reset`) |
+| **set_mass_cg.py** | **총무게·무게중심(x, y, z)·모터 한 번에 설정** → 두 model.sdf + run_mydrone_flow_test.sh. 모터 기본 `air2216`(실제 모터, 4.57 kgf), `air2216_low`(배터리 14.4 V + 손실 10 %, 3.90 kgf), `px4`(옛 모델 3.49 kgf). 옵션 `--inertia ixx iyy izz`(관성 직접), `--arm 0.177`(모터 위치), `--cg-y`·`--cg-z`(무게중심 y·z mm), `--ground`(착지 바닥 높이 mm) | `python3 tools/vehicle/set_mass_cg.py 2600 -12.1 --cg-y -1.0 --cg-z -34.8` (되돌리기: `reset`) |
 | last_setting.txt | 마지막 set_mass_cg.py 실행에서 바뀐 값 표 (생성됨, 보고용) | — |
-| set_camera.py | 아래쪽 카메라 달기 (기본: IMX219 + RPi v2 렌즈 가정 62.2°, 640×480, 15 Hz, 앞 0.12 m·아래 0.03 m·바로 아래). 토픽 /down_camera/image. `set_mass_cg.py reset` 뒤에는 다시 실행 | `python3 tools/vehicle/set_camera.py [--x 0.12 --pitch 90 --hfov 62.2]` (떼기: `remove`) |
+| set_camera.py | 아래쪽 카메라 달기 (기본 11/24: IMX219 120° 렌즈 = 가로 90°, 640×480, 15 Hz, 그리퍼 하우징 아래 (0, 0, −0.144) m, 바로 아래). 토픽 /down_camera/image. `set_mass_cg.py reset` 뒤에는 다시 실행 | `python3 tools/vehicle/set_camera.py [--z -0.144 --pitch 90 --hfov 90]` (떼기: `remove`) |
 | camera_config.txt | 카메라 위치·화각 (생성됨, tag_approach_test.py가 읽음) | — |
-| **set_sensors.py** | **센서 3개 위치 한 번에**: 광류·거리계·아래쪽 카메라 (mm, 앞/왼/위, 하판 아랫면 기준) → model.sdf pose·주석 + set_camera.py + PX4 센서 위치(EKF2_OF/RNG_POS_X/Y/Z, EKF2_MIN_RNG)를 지금 무게중심 기준으로 다시 계산 | `python3 tools/vehicle/set_sensors.py --flow 80 0 -20 --range 80 0 -20 --camera 120 0 -30 90` (보기: `show`) |
+| **set_sensors.py** | **센서 3개 위치 한 번에**: 광류·거리계·아래쪽 카메라 (mm, 앞/왼/위, 하판 아랫면 기준) → model.sdf pose·주석 + set_camera.py + PX4 센서 위치(EKF2_OF/RNG_POS_X/Y/Z, EKF2_MIN_RNG)를 지금 무게중심 기준으로 다시 계산 | `python3 tools/vehicle/set_sensors.py --flow 169 175 -5 --range 189 175 -5 --camera 0 0 -144 90` (보기: `show`) |
+| **set_gripper.py** | **그리퍼를 기체 모델에 붙이기** (선배 STEP → meshes/): 장착판·하우징·착륙 다리 4개(고정), 가운데 손가락 2개(관절, /gripper/finger_l·r), 택배 붙이기·떼기(DetachableJoint, /parcel_H·/parcel attach·detach). 기체 모양도 실제 CAD(x500 다리 없음). 몸통 무게 = 지금 - 택배 0.2 - 그리퍼 0.72 kg, 무게중심은 드론 전체(택배 없이)가 (−13.1, −1.1, −19.3) mm 되게. set_mass_cg·set_sensors **다음에** 실행 | `python3 tools/vehicle/set_gripper.py` (떼기: `remove`) |
 
 ### tools/analysis/ — 비행 로그 분석
 | 파일 | 역할 | 실행 |
@@ -96,6 +97,11 @@ parcel-drone-sim/
 | hover_test.py | 호버 시험: 이륙 → 1.5 m에서 정지(기본 30 s) → 착륙 | `python3 scripts/hover_test.py [초]` |
 | margin_test.py | **여유 시험**: 1.5 m 호버 15 s → 2.5 m 급상승 → 복귀 → 속도 1.5 m/s로 북 2 m 왕복 → 착륙 (모터 포화·기울기 확인) | `python3 scripts/margin_test.py` |
 | tag_approach_test.py | **AprilTag 정밀 접근**: H → P(광류) → 태그 인식 → 북·동 25 cm 이동으로 카메라 방향 측정 → 태그 위로 반복 맞춤(1.5 m → 1.0 m) → H 착륙. 필요: set_camera.py, add_apriltag.py, `pip3 install pupil-apriltags opencv-python`, `apt install python3-gz-transport13 python3-gz-msgs10` | `python3 scripts/tag_approach_test.py 결과폴더` (`--view`: 카메라만 확인) |
+| **mission_tag.py** | **미션 + 카메라 정밀 접근 (공설용)**: mission_hdph.py와 같은 동선 H → D → P → H, P에서만 아래쪽 카메라로 택배 AprilTag를 보고 1.5 m → 1.0 m 맞춤 → 0.5 m 하강(집기 흉내). 카메라→이동 방향은 기수로 계산 (25 cm 보정 이동 없음). 필요: tag_approach_test.py와 같음 | `python3 scripts/mission_tag.py 결과폴더` |
+| camera_view.py | 아래쪽 카메라 화면을 따로 창으로 띄움 (태그 인식 테두리·거리 표시). Gazebo Image Display가 안 뜰 때, 녹화용 | `python3 scripts/camera_view.py` (끄기: q) |
+| **mission_gripper.py** | **그리퍼 배달·수거 미션 (공설용)**: S에서 빈손 출발 → H 택배를 카메라(태그 id 1)로 찾아 집기 → D에 놓기 → P 택배(태그 id 0)를 찾아 집기 → H로 들고 와서 착륙. 끝나면 Gazebo 정답(쥔 위치, D·H 오차) 요약. 필요: set_gripper.py, 월드에 택배 2개 + 태그 | `python3 scripts/mission_gripper.py 결과폴더` |
+| repeat_gripper.sh | 그리퍼 미션 자동 반복 (시뮬 켜기 → 미션 → shutdown → 분석), H 착륙 오차 요약 | `bash tools/repeat_gripper.sh 3 이름` |
+| analysis/est_vs_true.py | 로그에서 드론이 믿는 위치 - 실제 위치를 시간별로 (어느 구간에서 틀어지는지) | `python3 tools/analysis/est_vs_true.py 로그.ulg 시작초 간격` |
 
 ## results — 실험 결과
 | 폴더 | 내용 |
@@ -110,6 +116,8 @@ parcel-drone-sim/
 | 261121_2600g*, 261121_sweep_* | 2.6 kg 여유 시험, 무게 자동 시험 (실제 모터 / 최악 조건) |
 | 261121_2600g_정리.md | **최대 무게**: 실제 모터 설계 목표(≤ 60 %) 약 2.7 kg·한계 약 3.0 kg / 최악 약 2.3 kg·약 2.7 kg, 바꾼 파라미터 표 |
 | 261122_* , 261122_정리.md | 실측 무게중심(x −11.9 mm) 반영 호버·여유 시험 (관성 근사 / CAD 관성) |
+| 261122_mission_2600g_air2216/ , _low/ | 무게중심 −11.9 mm 미션. 실제 모터 D 20 · P 1 · H 22 cm, 모터 최대 0.694 / 최악 조건 D 18 · P 6 · H 26 cm, 모터 최대 0.825, 포화 0 |
+| 261122_tag_approach/ | 무게중심 −11.9 mm·실제 모터 AprilTag 접근. 광류만 40.3 cm → 태그 맞춤 후 1.9 cm |
 | 설명.md | 결과 폴더 설명 |
 
 ## PX4 쪽에 연결된 것 (바로가기, 직접 수정 X)
@@ -190,3 +198,8 @@ shutdown               # PX4 정상 종료 (로그 저장)
 | 11/21 | (김수민) 여유 시험(margin_test.py), 무게 자동 시험(weight_sweep.sh, sweep_table.py), 최악 조건 모터(air2216_low), check_overshoot.py. 최대 무게 실제 모터 약 2.7 kg(≤ 60 %)·약 3.0 kg(≤ 70 %) |
 | 11/22 | (김수민) 실제 모터 확인 → 문서 "가정 모터" → "실제 모터". set_mass_cg.py: 기본 모터 air2216, 실행 스크립트 주석 자동 갱신, BAT1_CAPACITY 5200 추가, --inertia·--arm 옵션. 실측 무게중심 x −11.9 mm 반영 (무게는 2,600 g 유지). README 정리 |
 | 11/22 | (김수민) set_sensors.py 추가: 광류·거리계·카메라 위치를 한 줄로 바꾸고 PX4 센서 위치 파라미터(Y·Z, EKF2_MIN_RNG 포함) 자동 계산. set_mass_cg.py가 센서 위치를 모델에서 읽음 (예전엔 광류 x 80 mm 고정) |
+| 11/22 | (김수민) 무게중심 −11.9 mm로 미션 비행(실제 모터·최악 조건)과 AprilTag 접근 다시 시험 → 11/20과 같은 수준, 최악 조건 미션도 포화 없이 완주 |
+| 11/25 | (김수민) 그리퍼 Gazebo에 넣음 (set_gripper.py, models/x500_mydrone/meshes/ 9개, 선배 11/24 STEP 변환), 기체 모양 실제 CAD로, 착륙 = 그리퍼 다리 끝. 월드에 H 택배(parcel_H) 추가, 동선 선배 변경 H→D 5 m · D→P 5 m · P→H √50 m. mission_gripper.py (들고 출발 → 놓기 → 카메라로 찾아 집기 → 들고 귀환). mission_tag.py 0.5 m 맞춤 추가(11/25: 34.8 → 1.2 cm), camera_view.py |
+| 11/26 | (김수민) 미션 변경: S(H 뒤 1 m)에서 빈손 출발 → H 택배(태그 id 1) 인식·집기 → D 놓기 → P 택배(태그 id 0) 인식·집기 → H 착륙. 택배 90° 돌려 놓고 손가락이 긴 쪽(0.25 m)을 잡음, 기수 회전 없음. 집기: 1.5·1.0·0.5 m 카메라 맞춤 → 0.13 m까지 카메라 보며 하강 → 손가락 닫고 가운데로 끼워 맞춘 뒤 고정. 태그로 기수 오차(약 5°) 재서 다음 경로 보정. 손가락 충돌 추가, 거리계 가림·태그 놓침 안전장치. 결과(맞춤1·확인1): 쥔 위치 ±1 cm, D 8~10 cm, H 9~19 cm. 태그 그림 파일 이름을 태그별로(tag0/tag1), 카메라 가까운 면 0.003 m. tools/repeat_gripper.sh(자동 반복), tools/analysis/est_vs_true.py(추정-실제 오차 구간별) |
+| 11/24 | (김수민) mission_tag.py 추가: 미션 동선 그대로 날다가 P에서 카메라로 태그 인식 → 정밀 접근 → 집기 고도까지 하강 (tag_approach_test.py는 H → P 단독 시험으로 유지) |
+| 11/24 | (김수민) 선배 확정 센서 위치 반영 (그리퍼가 하판 아래를 가려서): 광류·거리계 → M3(앞-왼쪽) 모터 아래 (169, 175, −5)·(189, 175, −5) mm, 카메라 → 그리퍼 하우징 아래 (0, 0, −144) mm, IMX219 120° 렌즈(가로 90°). 무게중심 택배 2호 포함 (−12.1, −1.0, −34.8) mm (z 처음 반영, 이전 −49.6). set_mass_cg.py: --cg-y·--cg-z·--ground 옵션, CA_ROTOR_PY·EKF2_IMU_POS_Y/Z도 무게중심 기준 계산. set_camera.py 기본값 변경 |

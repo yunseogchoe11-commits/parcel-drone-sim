@@ -4,7 +4,7 @@
   1. PX4 기본 월드(default.sdf)를 읽어 물리·플러그인·지구 좌표 설정을 그대로 가져온다.
      (PX4가 기대하는 설정이라 직접 만들지 않고 복사한다.)
   2. 회색 바닥(ground_plane)을 지우고 강당 바닥 모델(나무 마루 그림)을 넣는다.
-  3. 벽 4개, H/D/P 표시(테두리), 택배 상자(P 위치)를 넣는다.
+  3. 벽 4개, H/D/P 표시(테두리), 택배 상자(P 위치, 그리고 PARCEL_AT_H면 H에도)를 넣는다.
 
 설정값은 모두 tools/auditorium_config.py 에 있다. 그 파일만 고치고 이 스크립트를 다시 실행한다.
 worlds/auditorium.sdf 를 직접 고치면 다시 생성할 때 덮어써진다.
@@ -12,6 +12,7 @@ worlds/auditorium.sdf 를 직접 고치면 다시 생성할 때 덮어써진다.
 사용: python3 tools/world/make_auditorium_world.py   (파이썬 기본 기능만 사용)
 실행: PX4_GZ_WORLD=auditorium make px4_sitl gz_x500_flow
 """
+import math
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -129,19 +130,23 @@ def world_items():
                  box("w", x - a, y, z, w, C.PAD_SIZE, 0.002, rgba))
         items.append(f'<model name="pad_{name}"><static>true</static><link name="link">{frame}</link></model>')
 
-    # 4) 택배 상자 (P에 놓임, 움직일 수 있음)
+    # 4) 택배 상자: P에 놓인 것 (parcel, 태그 id 0) + 첫 택배 B (parcel_H, 태그 id 1). 태그는 add_apriltag.py가 붙임
     bx, by, bz = C.PARCEL_SIZE
     m = C.PARCEL_MASS
-    px, py = to_world(*C.P)
     ixx, iyy, izz = m / 12 * (by**2 + bz**2), m / 12 * (bx**2 + bz**2), m / 12 * (bx**2 + by**2)
     geom = f"<geometry><box><size>{bx} {by} {bz}</size></box></geometry>"
-    items.append(
-        f'<model name="parcel"><pose>{px} {py} {bz / 2} 0 0 0</pose><link name="link">'
-        f'<inertial><mass>{m}</mass><inertia><ixx>{ixx:.6f}</ixx><iyy>{iyy:.6f}</iyy><izz>{izz:.6f}</izz>'
-        f'<ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>'
-        f'<collision name="col">{geom}<surface><friction><ode><mu>{C.PARCEL_MU}</mu>'
-        f'<mu2>{C.PARCEL_MU}</mu2></ode></friction></surface></collision>'
-        f'<visual name="vis">{geom}{material("0.55 0.42 0.30 1")}</visual></link></model>')
+    spots = [("parcel", C.P, "0.55 0.42 0.30 1")]
+    if getattr(C, "PARCEL_AT_H", False):
+        spots.append(("parcel_H", getattr(C, "B", C.H), "0.62 0.50 0.36 1"))
+    for name, pos, rgba in spots:
+        px, py = to_world(*pos)
+        items.append(
+            f'<model name="{name}"><pose>{px} {py} {bz / 2} 0 0 {math.radians(getattr(C, "PARCEL_YAW", 0.0)):.6f}</pose><link name="link">'
+            f'<inertial><mass>{m}</mass><inertia><ixx>{ixx:.6f}</ixx><iyy>{iyy:.6f}</iyy><izz>{izz:.6f}</izz>'
+            f'<ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>'
+            f'<collision name="col">{geom}<surface><friction><ode><mu>{C.PARCEL_MU}</mu>'
+            f'<mu2>{C.PARCEL_MU}</mu2></ode></friction></surface></collision>'
+            f'<visual name="vis">{geom}{material(rgba)}</visual></link></model>')
     return items
 
 

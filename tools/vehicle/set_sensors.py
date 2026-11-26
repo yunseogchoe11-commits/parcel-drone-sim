@@ -1,10 +1,12 @@
 """센서 3개(광류, 거리계, 아래쪽 카메라) 위치를 바꾸고, PX4 센서 위치 파라미터까지 다시 계산한다.
 
 사용 (단위 mm, 기준 base_link = 모터 4개 가운데·하판 아랫면, 앞 +, 왼쪽 +, 위 +)
-  python3 tools/vehicle/set_sensors.py --flow 80 0 -20 --range 80 0 -20 --camera 120 0 -30 90
-  python3 tools/vehicle/set_sensors.py --camera 100 0 -40 90        # 바꿀 센서만 줘도 됨
+  python3 tools/vehicle/set_sensors.py --flow 169 175 -5 --range 189 175 -5 --camera 0 0 -144 90   # 11/24 확정 위치
+  python3 tools/vehicle/set_sensors.py --camera 0 0 -144 90         # 바꿀 센서만 줘도 됨
   python3 tools/vehicle/set_sensors.py show                         # 지금 위치 보기
 
+  11/24 선배 확정: 광류·거리계는 M3(앞-왼쪽) 모터 마운트 아랫덮개 (그리퍼가 하판 아래 시야를 가려서),
+                   카메라는 그리퍼 하우징 아래 가운데 (IMX219 120°, 가로 화각 90°)
   --flow   x y z        광류 카메라 (PMW3901 역할) 위치. 바닥을 바라봄
   --range  x y z        거리계 (VL53L1X 역할) 위치. 바닥을 바라봄
   --camera x y z pitch  아래쪽 카메라 (IMX219) 위치 + pitch(°, 90 = 바로 아래). 화각 등은 set_camera.py 옵션 그대로

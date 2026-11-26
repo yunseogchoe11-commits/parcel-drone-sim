@@ -5,10 +5,11 @@
     <self_collide>false</self_collide>
     <static>false</static>
     <link name="base_link">
-      <inertial><pose>-0.0119 0.0001 -0.0496 0 0 0</pose><mass>2.536</mass><inertia><ixx>0.02747</ixx><ixy>0</ixy><ixz>0</ixz><iyy>0.02747</iyy><iyz>0</iyz><izz>0.05072</izz></inertia></inertial>
+                                                                                          <!-- gripper:orig_base_inertial 2.536 -0.0121 -0.001 -0.0348 0.02747 0.02747 0.05072 -->
+      <inertial><pose>-0.0184489 -0.00286456 0.0183037 0 0 0</pose><mass>1.6143</mass><inertia><ixx>0.0174861</ixx><ixy>0</ixy><ixz>0</ixz><iyy>0.0174861</iyy><iyz>0</iyz><izz>0.032286</izz></inertia></inertial>
       <gravity>true</gravity>
       <velocity_decay />
-      <visual name="base_link_visual">
+      <!-- gripper-off <visual name="base_link_visual">
         <pose>0 0 .025 0 0 3.141592654</pose>
         <geometry>
           <mesh>
@@ -16,8 +17,8 @@
             <uri>model://x500_base/meshes/NXP-HGD-CF.dae</uri>
           </mesh>
         </geometry>
-      </visual>
-      <visual name="5010_motor_base_0">
+      </visual> gripper-off -->
+      <!-- gripper-off <visual name="5010_motor_base_0">
         <pose>0.174 0.174 .032 0 0 -.45</pose>
         <geometry>
           <mesh>
@@ -25,8 +26,8 @@
             <uri>model://x500_base/meshes/5010Base.dae</uri>
           </mesh>
         </geometry>
-      </visual>
-      <visual name="5010_motor_base_1">
+      </visual> gripper-off -->
+      <!-- gripper-off <visual name="5010_motor_base_1">
         <pose>-0.174 0.174 .032 0 0 -.45</pose>
         <geometry>
           <mesh>
@@ -34,8 +35,8 @@
             <uri>model://x500_base/meshes/5010Base.dae</uri>
           </mesh>
         </geometry>
-      </visual>
-      <visual name="5010_motor_base_2">
+      </visual> gripper-off -->
+      <!-- gripper-off <visual name="5010_motor_base_2">
         <pose>0.174 -0.174 .032 0 0 -.45</pose>
         <geometry>
           <mesh>
@@ -43,8 +44,8 @@
             <uri>model://x500_base/meshes/5010Base.dae</uri>
           </mesh>
         </geometry>
-      </visual>
-      <visual name="5010_motor_base_3">
+      </visual> gripper-off -->
+      <!-- gripper-off <visual name="5010_motor_base_3">
         <pose>-0.174 -0.174 .032 0 0 -.45</pose>
         <geometry>
           <mesh>
@@ -52,8 +53,8 @@
             <uri>model://x500_base/meshes/5010Base.dae</uri>
           </mesh>
         </geometry>
-      </visual>
-      <visual name="NXP_FMUK66_FRONT">
+      </visual> gripper-off -->
+      <!-- gripper-off <visual name="NXP_FMUK66_FRONT">
         <pose>0.047 .001 .043 1 0 1.57</pose>
         <cast_shadows>false</cast_shadows>
         <geometry>
@@ -71,8 +72,8 @@
             </metal>
           </pbr>
         </material>
-      </visual>
-      <visual name="NXP_FMUK66_TOP">
+      </visual> gripper-off -->
+      <!-- gripper-off <visual name="NXP_FMUK66_TOP">
         <pose>-0.023 0 .0515 0 0 -1.57</pose>
         <cast_shadows>false</cast_shadows>
         <geometry>
@@ -90,8 +91,8 @@
             </metal>
           </pbr>
         </material>
-      </visual>
-      <visual name="RDDRONE_FMUK66_TOP">
+      </visual> gripper-off -->
+      <!-- gripper-off <visual name="RDDRONE_FMUK66_TOP">
         <pose>-.03 0 .0515 0 0 -1.57</pose>
         <cast_shadows>false</cast_shadows>
         <geometry>
@@ -109,7 +110,7 @@
             </metal>
           </pbr>
         </material>
-      </visual>
+      </visual> gripper-off -->
       <collision name="base_link_collision_0">
         <pose>0 0 .007 0 0 0</pose>
         <geometry>
@@ -129,7 +130,7 @@
           </friction>
         </surface>
       </collision>
-      <collision name="base_link_collision_1">
+      <!-- gripper-off <collision name="base_link_collision_1">
         <pose>0 -0.098 -.123 -0.35 0 0</pose>
         <geometry>
           <box>
@@ -147,8 +148,8 @@
             <ode />
           </friction>
         </surface>
-      </collision>
-      <collision name="base_link_collision_2">
+      </collision> gripper-off -->
+      <!-- gripper-off <collision name="base_link_collision_2">
         <pose>0 0.098 -.123 0.35 0 0</pose>
         <geometry>
           <box>
@@ -166,8 +167,8 @@
             <ode />
           </friction>
         </surface>
-      </collision>
-      <collision name="base_link_collision_3">
+      </collision> gripper-off -->
+      <!-- gripper-off <collision name="base_link_collision_3">
         <pose>0 -0.132 -.2195 0 0 0</pose>
         <geometry>
           <box>
@@ -185,8 +186,8 @@
             <ode />
           </friction>
         </surface>
-      </collision>
-      <collision name="base_link_collision_4">
+      </collision> gripper-off -->
+      <!-- gripper-off <collision name="base_link_collision_4">
         <pose>0 0.132 -.2195 0 0 0</pose>
         <geometry>
           <box>
@@ -204,7 +205,7 @@
             <ode />
           </friction>
         </surface>
-      </collision>
+      </collision> gripper-off -->
       <sensor name="air_pressure_sensor" type="air_pressure">
         <gz_frame_id>base_link</gz_frame_id>
         <always_on>1</always_on>

@@ -5,8 +5,13 @@
   python3 tools/vehicle/set_mass_cg.py 2600 -11.9 --motor air2216_low  # 저전압·손실 최악 조건 모터로
   python3 tools/vehicle/set_mass_cg.py 2600 -11.9 --inertia 0.0450 0.0453 0.0424   # 관성(ixx iyy izz, kg·m²)을 직접 넣음
   python3 tools/vehicle/set_mass_cg.py 2600 -11.9 --arm 0.177          # 모터 위치(중심~모터 x, y 거리 m)를 바꿈 (기본 0.174)
+  python3 tools/vehicle/set_mass_cg.py 2600 -12.1 --cg-y -1.0 --cg-z -34.8   # 무게중심 y(왼쪽 +)·z(위 +)도 바꿈 (mm)
+  python3 tools/vehicle/set_mass_cg.py 2600 -12.1 --ground -270        # 착지했을 때 바닥 높이 (mm, 하판 아랫면 기준, 아래 -)
+                                                                       #  그리퍼+택배: -270 (택배 바닥), 그리퍼만: -254, x500 다리: -240
+  ※ 그리퍼를 붙였으면(set_gripper.py) 이 도구를 실행한 뒤 set_gripper.py 를 다시 실행
   python3 tools/vehicle/set_mass_cg.py reset                           # 원래 모델로 되돌림 (git 기준)
-  옵션은 같이 써도 됨. 생략한 옵션은 기본값 (--motor air2216, 관성은 무게 비율 근사, --arm 0.174)
+  옵션은 같이 써도 됨. 생략하면: --motor air2216, 관성은 무게 비율 근사, --arm·--cg-y·--cg-z는 지금 모델 값 그대로,
+  --ground는 마지막으로 준 값 (없으면 -240 = Gazebo 기본 다리). 기준점(base_link) = 모터 4개 가운데 · 하판 아랫면
 
 모터 (--motor, 생략하면 air2216 = 실제 모터)
   air2216     : 실제 모터 T-Motor AIR2216 II KV920 + T1045 II (11/22 확인). 제조사 공식 추력표(16 V, 30~100 % 15점)에
@@ -18,13 +23,15 @@
 
 하는 일
   1. models/x500_mydrone_base/model.sdf : 몸통 무게·무게중심·관성 (+ --arm이면 로터 위치)
-     - 몸통 = 총무게 - 로터 4개(64 g), 무게중심 y·z는 parts.csv 계산값 (y +0.1, z -49.6 mm) 유지
+     - 몸통 = 총무게 - 로터 4개(64 g). 무게중심 y·z는 --cg-y/--cg-z (없으면 지금 모델 값 유지)
+       (11/24 선배 계산: 택배 2호 포함 2,596 g → (-12.1, -1.0, -34.8) mm, 택배 없음 → (-13.1, -1.1, -19.3) mm)
      - 관성: --inertia 값, 없으면 PX4 기본 x500 관성을 무게 비율로 키운 근사
   2. models/x500_mydrone/model.sdf : 모터 4개의 motorConstant, maxRotVelocity, momentConstant
   3. tools/run_mydrone_flow_test.sh 생성 (run_mydrone_flow.sh 복사 + 아래 값·주석만 다시 계산·추가)
-     - CA_ROTOR*_PX, _PY : 모터 위치를 무게중심 기준으로 (앞 arm - cg, 뒤 -arm - cg / 좌우 ±arm)
-     - EKF2_OF_POS_X, EKF2_RNG_POS_X : 광류·거리계 위치 (센서 x 80 mm - cg)
-     - EKF2_IMU_POS_X : IMU 위치 (FC x 0 mm - cg)
+     - CA_ROTOR*_PX, _PY : 모터 위치를 무게중심 기준으로 (PX: 앞 arm - cg_x, 뒤 -arm - cg_x / PY: 오른쪽 arm + cg_y, 왼쪽 -arm + cg_y)
+     - EKF2_OF_POS_X/Y/Z, EKF2_RNG_POS_X/Y/Z : 광류·거리계 위치 - 무게중심 (FRD: 앞, 오른쪽, 아래)
+     - EKF2_IMU_POS_X/Y/Z : IMU(FC, 기준점 위 36 mm) - 무게중심
+     - EKF2_MIN_RNG : 거리계 높이 - 바닥 (--ground)
      - SIM_GZ_EC_MIN1~4, SIM_GZ_EC_MAX1~4 : 모터 최대 회전에 맞춤
      - BAT1_CAPACITY 5200 (VEGA 4S 5200 mAh)
      원본 run_mydrone_flow.sh 는 건드리지 않는다.
@@ -48,8 +55,9 @@ RECORD = REPO / "tools/vehicle/last_setting.txt"
 
 ROTOR_G = 64.0          # 로터 4개 (model.sdf rotor 링크 0.016 kg x 4)
 ARM_DEFAULT = 0.174     # 모터 x, y 위치 (m, 기체 중심 기준). PX4 기본. CAD 실측은 0.1771
-IMU_X_MM = 0.0          # IMU(FC) x 위치 (mm)
-GROUND_Z_MM = -240.0    # 착륙했을 때 바닥 높이 (base_link 기준, Gazebo 기본 다리) → EKF2_MIN_RNG
+IMU_MM = (0.0, 0.0, 36.0)   # IMU(FC) 위치 (앞/왼/위 mm, base_link 기준. 상판 위 FC 높이 추정)
+GROUND_DEFAULT_MM = -240.0  # 착륙했을 때 바닥 높이 (base_link 기준, Gazebo 기본 x500 다리) → EKF2_MIN_RNG
+GROUND_FILE = REPO / "tools/vehicle/ground_mm.txt"   # --ground 로 준 값을 기억 (set_sensors.py 재실행 때도 유지)
 BAT_MAH = 5200
 G = 9.81
 
@@ -99,26 +107,32 @@ def read_motor():
     return s, get("motorConstant"), get("maxRotVelocity"), get("momentConstant")
 
 
-def params_for(cg, arm, flow, rng):
-    """cg, flow, rng: (앞, 왼, 위) mm. PX4 센서 위치는 무게중심 기준 앞 +, 오른쪽 +, 아래 + (m)."""
-    c = cg[0] / 1000
+def ground_mm():
+    return float(GROUND_FILE.read_text().split()[0]) if GROUND_FILE.exists() else GROUND_DEFAULT_MM
+
+
+def params_for(cg, arm, flow, rng, ground=None):
+    """cg, flow, rng: (앞, 왼, 위) mm. PX4 위치는 무게중심 기준 FRD (앞 +, 오른쪽 +, 아래 +, m)."""
+    ground = ground_mm() if ground is None else ground
+    cx, cy = cg[0] / 1000, cg[1] / 1000
     frd = lambda p: ((p[0] - cg[0]) / 1000, -(p[1] - cg[1]) / 1000, -(p[2] - cg[2]) / 1000)
-    fo, ro = frd(flow), frd(rng)
+    fo, ro, io = frd(flow), frd(rng), frd(IMU_MM)
     return {
-        "CA_ROTOR0_PX": arm - c, "CA_ROTOR2_PX": arm - c,      # 앞
-        "CA_ROTOR1_PX": -arm - c, "CA_ROTOR3_PX": -arm - c,    # 뒤
-        "CA_ROTOR0_PY": arm, "CA_ROTOR1_PY": -arm, "CA_ROTOR2_PY": -arm, "CA_ROTOR3_PY": arm,
+        "CA_ROTOR0_PX": arm - cx, "CA_ROTOR2_PX": arm - cx,      # 앞
+        "CA_ROTOR1_PX": -arm - cx, "CA_ROTOR3_PX": -arm - cx,    # 뒤
+        "CA_ROTOR0_PY": arm + cy, "CA_ROTOR1_PY": -arm + cy,     # 0 앞-오른쪽, 1 뒤-왼쪽
+        "CA_ROTOR2_PY": -arm + cy, "CA_ROTOR3_PY": arm + cy,     # 2 앞-왼쪽, 3 뒤-오른쪽
         "EKF2_OF_POS_X": fo[0], "EKF2_OF_POS_Y": fo[1], "EKF2_OF_POS_Z": fo[2],
         "EKF2_RNG_POS_X": ro[0], "EKF2_RNG_POS_Y": ro[1], "EKF2_RNG_POS_Z": ro[2],
-        "EKF2_IMU_POS_X": (IMU_X_MM - cg[0]) / 1000,
-        "EKF2_MIN_RNG": (rng[2] - GROUND_Z_MM) / 1000,
+        "EKF2_IMU_POS_X": io[0], "EKF2_IMU_POS_Y": io[1], "EKF2_IMU_POS_Z": io[2],
+        "EKF2_MIN_RNG": (rng[2] - ground) / 1000,
     }
 
 
 # (설명, 부호): 주석에 쓸 말. 부호 -1이면 값의 반대 (아래 + → 위)
 COMMENT = {"EKF2_OF_POS_X": ("광류: 앞", 1), "EKF2_OF_POS_Y": ("광류: 오른쪽", 1), "EKF2_OF_POS_Z": ("광류: 위", -1),
            "EKF2_RNG_POS_X": ("거리계: 앞", 1), "EKF2_RNG_POS_Y": ("거리계: 오른쪽", 1), "EKF2_RNG_POS_Z": ("거리계: 위", -1),
-           "EKF2_IMU_POS_X": ("IMU: 앞", 1)}
+           "EKF2_IMU_POS_X": ("IMU: 앞", 1), "EKF2_IMU_POS_Y": ("IMU: 오른쪽", 1), "EKF2_IMU_POS_Z": ("IMU: 위", -1)}
 
 
 def run_value(text, name):
@@ -143,12 +157,16 @@ def main():
         for f in (SDF, MOTOR_SDF):
             subprocess.run(["git", "-C", str(REPO), "checkout", "--", str(f.relative_to(REPO))], check=True)
         RUN_TEST.unlink(missing_ok=True)
-        print("원래 모델로 되돌림 (git 기준 model.sdf 2개 복구, run_mydrone_flow_test.sh 삭제)")
+        GROUND_FILE.unlink(missing_ok=True)
+        (REPO / "tools/vehicle/spawn_z.txt").unlink(missing_ok=True)
+        print("원래 모델로 되돌림 (git 기준 model.sdf 2개 복구, run_mydrone_flow_test.sh·ground_mm.txt 삭제)")
         print("주의: 카메라(set_camera.py)를 달았었다면 다시 실행")
         return
     motor_key = (pop_opt(args, "--motor", 1) or ["air2216"])[0]
     inertia = pop_opt(args, "--inertia", 3)
     arm_opt = pop_opt(args, "--arm", 1)
+    cgy_opt, cgz_opt = pop_opt(args, "--cg-y", 1), pop_opt(args, "--cg-z", 1)
+    ground_opt = pop_opt(args, "--ground", 1)
     if len(args) != 2 or motor_key not in MOTORS:
         sys.exit(__doc__)
     total_g, cg_x = float(args[0]), float(args[1])
@@ -156,7 +174,12 @@ def main():
 
     # 1. 몸통 무게·무게중심·관성 (+ 로터 위치)
     s, a, b, old_mass, old_pose, old_in = read_sdf()
-    _, (_, cg_y, cg_z) = parts_cg()
+    cg_y = float(cgy_opt[0]) if cgy_opt else old_pose[1] * 1000
+    cg_z = float(cgz_opt[0]) if cgz_opt else old_pose[2] * 1000
+    old_ground = ground_mm()
+    ground = float(ground_opt[0]) if ground_opt else old_ground
+    if ground_opt:
+        GROUND_FILE.write_text(f"{ground:g}  # 착지 때 바닥 높이 mm (base_link 기준). set_mass_cg.py --ground\n")
     m = (total_g - ROTOR_G) / 1000
     if inertia:
         ixx, iyy, izz = (float(v) for v in inertia)
@@ -191,11 +214,14 @@ def main():
     # 3. 실행 스크립트 (값 + 주석)
     run = RUN.read_text()
     flow, rng = sensor_poses()
-    new_p = params_for((cg_x, cg_y, cg_z), arm, flow, rng)
+    new_p = params_for((cg_x, cg_y, cg_z), arm, flow, rng, ground)
     old_p = {n: run_value(run, n) for n in new_p}
     for n, v in new_p.items():
         if n in COMMENT:
-            note = f"  # {COMMENT[n][0]} {COMMENT[n][1] * v * 100:.1f} cm"
+            label, val = COMMENT[n][0], COMMENT[n][1] * v * 100
+            if val < -0.05 and label.endswith(("오른쪽", "위")):
+                label, val = label.replace("오른쪽", "왼쪽").replace("위", "아래"), -val
+            note = f"  # {label} {val:.1f} cm"
         elif n == "EKF2_MIN_RNG":
             note = "  # 땅에 있을 때 거리계 값 (거리계 높이 - 바닥, m)"
         else:
@@ -211,11 +237,12 @@ def main():
                  run, count=1, flags=re.M)
     run = re.sub(r"^#   광류·거리계: .*$", f"#   광류 (앞/왼/위 mm): ({flow[0]:.0f}, {flow[1]:.0f}, {flow[2]:.0f}), 거리계: ({rng[0]:.0f}, {rng[1]:.0f}, {rng[2]:.0f})"
                  f"  -> 무게중심 기준 광류 앞 {flow[0] - cg_x:.1f} mm, 위 {flow[2] - cg_z:.1f} mm", run, count=1, flags=re.M)
-    run = re.sub(r"^(#   IMU\(FC\): .*?-> 무게중심 기준 앞 )[\d.]+( mm.*)$", rf"\g<1>{IMU_X_MM - cg_x:.1f}\g<2>", run, count=1, flags=re.M)
+    run = re.sub(r"^#   IMU\(FC\): .*$", f"#   IMU(FC):     ({IMU_MM[0]:.0f}, {IMU_MM[1]:.0f}, {IMU_MM[2]:.0f})    -> 무게중심 기준 앞 {IMU_MM[0] - cg_x:.1f} mm, "
+                 f"위 {IMU_MM[2] - cg_z:.1f} mm (FC 높이 추정 포함)", run, count=1, flags=re.M)
     run = re.sub(r"^# 무게중심 보정 \(.*$", "# 무게중심 보정 (모터 위치를 무게중심 기준으로. set_mass_cg.py가 계산)", run, count=1, flags=re.M)
     run = re.sub(r"^#   모터 위치를 무게중심 기준으로 입력.*$",
                  f"#   모터 위치를 무게중심 기준으로 입력 (앞 +, 오른쪽 +, m). 무게중심 x {cg_x:+.1f} mm, 모터 ±{arm:.3f} m"
-                 f" -> 앞 {arm:.3f}{-cg_x / 1000:+.4f}, 뒤 {-arm:.3f}{-cg_x / 1000:+.4f}", run, count=1, flags=re.M)
+                 f" -> 앞 {arm:.3f}{-cg_x / 1000:+.4f}, 뒤 {-arm:.3f}{-cg_x / 1000:+.4f}, 좌우 ±{arm:.3f}{cg_y / 1000:+.4f}", run, count=1, flags=re.M)
     extra = (f"\n# 모터 회전 범위 (set_mass_cg.py --motor {motor_key})\n" +
              "".join(f"export PX4_PARAM_SIM_GZ_EC_MIN{i}={mo['ec_min']}\nexport PX4_PARAM_SIM_GZ_EC_MAX{i}={mo['ec_max']}\n"
                      for i in range(1, 5)) +
@@ -237,10 +264,13 @@ def main():
         "",
         "[Gazebo 모델 x500_mydrone_base/model.sdf]",
         f"  총무게      {old_mass*1000 + ROTOR_G:7.0f} g  ->  {total_g:7.0f} g   (몸통 {old_mass:.3f} -> {m:.3f} kg)",
-        f"  무게중심 x  {old_pose[0]*1000:+7.1f} mm ->  {cg_x:+7.1f} mm  (y {cg_y:+.1f}, z {cg_z:+.1f} mm 유지)",
+        f"  무게중심 x  {old_pose[0]*1000:+7.1f} mm ->  {cg_x:+7.1f} mm",
+        f"  무게중심 y  {old_pose[1]*1000:+7.1f} mm ->  {cg_y:+7.1f} mm  (왼쪽 +)",
+        f"  무게중심 z  {old_pose[2]*1000:+7.1f} mm ->  {cg_z:+7.1f} mm  (위 +, 하판 아랫면 기준)",
         f"  관성 ixx {old_in[0]:.5f} -> {ixx:.5f}, iyy {old_in[1]:.5f} -> {iyy:.5f}, izz {old_in[2]:.5f} -> {izz:.5f}  [{in_src}]",
         f"  모터 위치   ±{old_arm:.4f} -> ±{arm:.4f} m",
         f"  센서 위치 (앞/왼/위 mm, set_sensors.py가 바꿈): 광류 {tuple(round(v) for v in flow)}, 거리계 {tuple(round(v) for v in rng)}",
+        f"  착지 바닥 높이 {old_ground:+.0f} -> {ground:+.0f} mm (EKF2_MIN_RNG 계산용, --ground)",
         "",
         f"[Gazebo 모터 x500_mydrone/model.sdf] {mo['name']}",
         f"  motorConstant   {old_k:.5e} -> {mo['k']:.5e}",

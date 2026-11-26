@@ -294,7 +294,10 @@ async def flight(tag):
         alt, c = final
         S.append(f"최종 ({alt} m, 태그 보고 맞춘 뒤): 카메라 중심 ~ 태그 중심 수평 {math.hypot(c[0], c[1]) * 100:.1f} cm "
                  f"(x {c[0]*100:+.1f}, y {c[1]*100:+.1f} cm)")
-        S.append(f"  참고: 카메라가 기체 중심보다 앞 {float(cam_cfg['x'])*100:.0f} cm에 있음. 그리퍼를 태그 위에 두려면 이만큼 더 옮겨야 함")
+        if abs(float(cam_cfg['x'])) > 0.005:
+            S.append(f"  참고: 카메라가 기체 중심보다 앞 {float(cam_cfg['x'])*100:.0f} cm에 있음. 그리퍼를 태그 위에 두려면 이만큼 더 옮겨야 함")
+        else:
+            S.append("  참고: 카메라가 그리퍼 하우징 바로 아래(기체 가운데)라서 카메라 중심 = 그리퍼 중심")
     S.append("")
     S.append("사진: 1_P도착 / 5_맞춤 / 6_최종 .png (초록 = 인식한 태그, 빨간 점 = 태그 중심, 노란 + = 영상 중심)")
     (out / "summary.txt").write_text("\n".join(S) + "\n", encoding="utf-8")

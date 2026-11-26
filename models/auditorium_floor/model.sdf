@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sdf version="1.9">
-  <!-- tools/make_auditorium_world.py 가 생성. 직접 수정 금지 -->
+  <!-- tools/world/make_auditorium_world.py 가 생성. 직접 수정 금지 -->
   <!-- 강당 바닥 30 x 20 m, 나무 마루 그림. 모델 원점 = 강당 중앙 -->
   <model name="auditorium_floor">
     <static>true</static>

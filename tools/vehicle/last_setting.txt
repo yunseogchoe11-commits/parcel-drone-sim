@@ -1,11 +1,14 @@
-시뮬 기체 설정 변경 (set_mass_cg.py 2600 -11.9)
+시뮬 기체 설정 변경 (set_mass_cg.py 2600 -12.1 --motor air2216 --arm 0.1740)
 
 [Gazebo 모델 x500_mydrone_base/model.sdf]
   총무게         2600 g  ->     2600 g   (몸통 2.536 -> 2.536 kg)
-  무게중심 x    -11.9 mm ->    -11.9 mm  (y +0.1, z -49.6 mm 유지)
+  무게중심 x    -12.1 mm ->    -12.1 mm
+  무게중심 y     -1.0 mm ->     -1.0 mm  (왼쪽 +)
+  무게중심 z    -34.8 mm ->    -34.8 mm  (위 +, 하판 아랫면 기준)
   관성 ixx 0.02747 -> 0.02747, iyy 0.02747 -> 0.02747, izz 0.05072 -> 0.05072  [PX4 기본 x500 관성 × 무게 비율 (근사)]
   모터 위치   ±0.1740 -> ±0.1740 m
-  센서 위치 (앞/왼/위 mm, set_sensors.py가 바꿈): 광류 (80, 0, -20), 거리계 (80, 0, -20)
+  센서 위치 (앞/왼/위 mm, set_sensors.py가 바꿈): 광류 (169, 175, -5), 거리계 (189, 175, -5)
+  착지 바닥 높이 -270 -> -270 mm (EKF2_MIN_RNG 계산용, --ground)
 
 [Gazebo 모터 x500_mydrone/model.sdf] 실제 모터 AIR2216 II KV920 + T1045 II @14.8 V (T-Motor 공식 추력표)
   motorConstant   1.22990e-05 -> 1.22990e-05
@@ -19,18 +22,20 @@
   CA_ROTOR2_PX    +0.192 -> +0.186   <- 변경
   CA_ROTOR1_PX    -0.156 -> -0.162   <- 변경
   CA_ROTOR3_PX    -0.156 -> -0.162   <- 변경
-  CA_ROTOR0_PY    +0.174 -> +0.174
-  CA_ROTOR1_PY    -0.174 -> -0.174
-  CA_ROTOR2_PY    -0.174 -> -0.174
-  CA_ROTOR3_PY    +0.174 -> +0.174
-  EKF2_OF_POS_X   +0.098 -> +0.092   <- 변경
-  EKF2_OF_POS_Y   +0.000 -> +0.000
+  CA_ROTOR0_PY    +0.174 -> +0.173   <- 변경
+  CA_ROTOR1_PY    -0.174 -> -0.175   <- 변경
+  CA_ROTOR2_PY    -0.174 -> -0.175   <- 변경
+  CA_ROTOR3_PY    +0.174 -> +0.173   <- 변경
+  EKF2_OF_POS_X   +0.098 -> +0.181   <- 변경
+  EKF2_OF_POS_Y   +0.000 -> -0.176   <- 변경
   EKF2_OF_POS_Z   -0.030 -> -0.030
-  EKF2_RNG_POS_X  +0.098 -> +0.092   <- 변경
-  EKF2_RNG_POS_Y  +0.000 -> +0.000
+  EKF2_RNG_POS_X  +0.098 -> +0.201   <- 변경
+  EKF2_RNG_POS_Y  +0.000 -> -0.176   <- 변경
   EKF2_RNG_POS_Z  -0.030 -> -0.030
   EKF2_IMU_POS_X  +0.018 -> +0.012   <- 변경
-  EKF2_MIN_RNG    +0.220 -> +0.220
+  EKF2_IMU_POS_Y  +0.000 -> -0.001   <- 변경
+  EKF2_IMU_POS_Z  -0.086 -> -0.071   <- 변경
+  EKF2_MIN_RNG    +0.220 -> +0.265   <- 변경
   SIM_GZ_EC_MIN1~4  150 -> 143   <- 변경
   SIM_GZ_EC_MAX1~4  1000 -> 955   <- 변경
   BAT1_CAPACITY   -1 -> 5200   <- 변경 (BAT1_N_CELLS 4)

@@ -51,5 +51,14 @@ pkill -9 -f "gz sim"; sleep 1
 # PX4가 끝나면 (shutdown 또는 Ctrl+C) 남은 Gazebo도 같이 끈다
 trap 'pkill -9 -f "gz sim"; echo "Gazebo 정리 완료"' EXIT
 
+# 드론 생성 높이 (그리퍼로 택배를 든 채 시작하면 set_gripper.py가 tools/vehicle/spawn_z.txt 에 씀)
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SPAWN_Z=$(awk 'NR==1{print $1}' "$REPO_DIR/tools/vehicle/spawn_z.txt" 2>/dev/null)
+# 드론 출발 자리 (tools/auditorium_config.py 의 S. 월드 원점 = H. 11/26: H 뒤 1 m)
+SPAWN_XY=$(python3 -c "import sys; sys.path.insert(0, '$REPO_DIR/tools'); import auditorium_config as C; s = getattr(C, 'S', C.H); import math; print(f'{s[0]-C.H[0]},{s[1]-C.H[1]}', math.radians(getattr(C, 'S_YAW', 0.0)))" 2>/dev/null)
+read SPAWN_XY SPAWN_YAW <<< "$SPAWN_XY"
+export PX4_GZ_MODEL_POSE="${SPAWN_XY:-0,0},${SPAWN_Z:-0},0,0,${SPAWN_YAW:-0}"
+echo "드론 생성 위치 (월드, H 기준 m): ${PX4_GZ_MODEL_POSE}"
+
 cd ~/PX4-Autopilot
 PX4_SYS_AUTOSTART=4021 PX4_GZ_WORLD=${1:-auditorium} PX4_SIM_MODEL=gz_x500_mydrone ./build/px4_sitl_default/bin/px4

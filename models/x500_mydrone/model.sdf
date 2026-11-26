@@ -76,7 +76,7 @@
     <!-- 센서 시작 -->
     <!-- ================================================================
          센서: 광류 카메라(PMW3901 역할) + 거리계(VL53L1X 역할)
-         위치: 두 센서 같은 자리. 하판 아랫면 기준 앞 8 cm, 아래 2 cm, 바닥을 바라봄 (10/31 사용자)
+         위치: 광류 앞 16.9 cm, 왼쪽 17.5 cm, 하판 아래 0.5 cm / 거리계 앞 18.9 cm, 왼쪽 17.5 cm, 하판 아래 0.5 cm, 바닥을 바라봄 (set_sensors.py)
          좌표: pose = x 앞, y 왼쪽, z 위 (m)
                기준 base_link = 모터 4개 중심, 하판 아랫면 (무게중심 계산과 같은 원점)
          위치를 바꿀 때는 tools/vehicle/set_sensors.py 를 쓴다 (pose + PX4 센서 위치 파라미터를 같이 바꿈).
@@ -88,23 +88,23 @@
                  광선 1개로 측정 (실제 VL53L1X 시야 약 27 도)
          ================================================================ -->
 
-    <!-- [위치] 광류 카메라: 앞 8 cm, 하판 아래 2 cm -->
+    <!-- [위치] 광류 카메라: 앞 16.9 cm, 왼쪽 17.5 cm, 하판 아래 0.5 cm -->
     <include merge='true'>
       <uri>model://optical_flow</uri>
-      <pose relative_to="base_link">0.08 0 -0.02 0 0 0</pose>
+      <pose relative_to="base_link">0.169 0.175 -0.005 0 0 0</pose>
     </include>
     <joint name="optical_flow_joint" type="fixed">
       <parent>base_link</parent>
       <child>flow_link</child>
     </joint>
 
-    <!-- [위치] 거리계: 앞 8 cm, 하판 아래 2 cm, 아래를 바라봄 -->
+    <!-- [위치] 거리계: 앞 18.9 cm, 왼쪽 17.5 cm, 하판 아래 0.5 cm, 아래를 바라봄 -->
     <joint name="lidar_sensor_joint" type="fixed">
       <parent>base_link</parent>
       <child>lidar_sensor_link</child>
     </joint>
     <link name="lidar_sensor_link">
-      <pose relative_to="base_link">0.08 0 -0.02 0 1.5707 0</pose>
+      <pose relative_to="base_link">0.189 0.175 -0.005 0 1.5707 0</pose>
       <inertial>
         <mass>0.001</mass>
         <inertia><ixx>0.00001</ixx><iyy>0.00001</iyy><izz>0.00001</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
@@ -128,13 +128,13 @@
     <!-- 센서 끝 -->
 
     <!-- down_camera start -->
-    <!-- [위치] 아래쪽 카메라 (IMX219 가정): 앞 0.12 m, 좌우 0.0 m, 위아래 -0.03 m, pitch 90.0° -->
+    <!-- [위치] 아래쪽 카메라 (IMX219 120°, 그리퍼 하우징 아래): 앞 0.0 m, 좌우 0.0 m, 위아래 -0.144 m, pitch 90.0° -->
     <joint name="down_camera_joint" type="fixed">
       <parent>base_link</parent>
       <child>down_camera_link</child>
     </joint>
     <link name="down_camera_link">
-      <pose relative_to="base_link">0.12 0.0 -0.03 0 1.5708 0.0000</pose>
+      <pose relative_to="base_link">0.0 0.0 -0.144 0 1.5708 0.0000</pose>
       <inertial>
         <mass>0.003</mass>
         <inertia><ixx>1e-6</ixx><iyy>1e-6</iyy><izz>1e-6</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>
@@ -150,13 +150,27 @@
         <always_on>1</always_on>
         <visualize>false</visualize>
         <camera>
-          <horizontal_fov>1.0856</horizontal_fov>
+          <horizontal_fov>1.5708</horizontal_fov>
           <image><width>640</width><height>480</height><format>R8G8B8</format></image>
-          <clip><near>0.03</near><far>30</far></clip>
+          <clip><near>0.003</near><far>30</far></clip>
           <noise><type>gaussian</type><mean>0</mean><stddev>0.005</stddev></noise>
         </camera>
       </sensor>
     </link>
     <!-- down_camera end -->
+    <!-- gripper start (tools/vehicle/set_gripper.py) -->
+    <link name="frame_cad"><pose relative_to="base_link">0 0 0 0 0 0</pose><inertial><pose>0 0 0 0 0 0</pose><mass>0.0001</mass><inertia><ixx>1e-07</ixx><ixy>0</ixy><ixz>0</ixz><iyy>1e-07</iyy><iyz>0</iyz><izz>1e-07</izz></inertia></inertial><visual name="frame_cad"><geometry><mesh><uri>model://x500_mydrone/meshes/frame_cad.stl</uri></mesh></geometry><material><ambient>0.20 0.22 0.25 1</ambient><diffuse>0.20 0.22 0.25 1</diffuse></material></visual></link>
+    <joint name="frame_cad_joint" type="fixed"><parent>base_link</parent><child>frame_cad</child></joint>
+    <link name="gripper_body"><pose relative_to="base_link">0 0 0 0 0 0</pose><inertial><pose>-0.00143902 0.00354102 -0.0887699 0 0 0</pose><mass>0.5695</mass><inertia><ixx>0.00669886</ixx><ixy>0</ixy><ixz>0</ixz><iyy>0.00652157</iyy><iyz>0</iyz><izz>0.0083926</izz></inertia></inertial><visual name="mount"><geometry><mesh><uri>model://x500_mydrone/meshes/gripper_mount.stl</uri></mesh></geometry><material><ambient>0.55 0.57 0.60 1</ambient><diffuse>0.55 0.57 0.60 1</diffuse></material></visual><visual name="body"><geometry><mesh><uri>model://x500_mydrone/meshes/gripper_body.stl</uri></mesh></geometry><material><ambient>0.85 0.85 0.82 1</ambient><diffuse>0.85 0.85 0.82 1</diffuse></material></visual><visual name="leg_fl"><geometry><mesh><uri>model://x500_mydrone/meshes/gripper_leg_fl.stl</uri></mesh></geometry><material><ambient>0.85 0.85 0.82 1</ambient><diffuse>0.85 0.85 0.82 1</diffuse></material></visual><visual name="leg_fr"><geometry><mesh><uri>model://x500_mydrone/meshes/gripper_leg_fr.stl</uri></mesh></geometry><material><ambient>0.85 0.85 0.82 1</ambient><diffuse>0.85 0.85 0.82 1</diffuse></material></visual><visual name="leg_bl"><geometry><mesh><uri>model://x500_mydrone/meshes/gripper_leg_bl.stl</uri></mesh></geometry><material><ambient>0.85 0.85 0.82 1</ambient><diffuse>0.85 0.85 0.82 1</diffuse></material></visual><visual name="leg_br"><geometry><mesh><uri>model://x500_mydrone/meshes/gripper_leg_br.stl</uri></mesh></geometry><material><ambient>0.85 0.85 0.82 1</ambient><diffuse>0.85 0.85 0.82 1</diffuse></material></visual><collision name="leg_tip_0"><pose>0.213 0.123 -0.242 0 0 0</pose><geometry><sphere><radius>0.012</radius></sphere></geometry><surface><friction><ode><mu>0.8</mu><mu2>0.8</mu2></ode></friction></surface></collision><collision name="leg_tip_1"><pose>0.213 -0.123 -0.242 0 0 0</pose><geometry><sphere><radius>0.012</radius></sphere></geometry><surface><friction><ode><mu>0.8</mu><mu2>0.8</mu2></ode></friction></surface></collision><collision name="leg_tip_2"><pose>-0.213 0.123 -0.242 0 0 0</pose><geometry><sphere><radius>0.012</radius></sphere></geometry><surface><friction><ode><mu>0.8</mu><mu2>0.8</mu2></ode></friction></surface></collision><collision name="leg_tip_3"><pose>-0.213 -0.123 -0.242 0 0 0</pose><geometry><sphere><radius>0.012</radius></sphere></geometry><surface><friction><ode><mu>0.8</mu><mu2>0.8</mu2></ode></friction></surface></collision></link>
+    <joint name="gripper_body_joint" type="fixed"><parent>base_link</parent><child>gripper_body</child></joint>
+    <link name="gripper_finger_l"><pose relative_to="base_link">0 0 0 0 0 0</pose><inertial><pose>0.0001 0.1329 -0.1576 0 0 0</pose><mass>0.0761</mass><inertia><ixx>0.0002715</ixx><ixy>0</ixy><ixz>0</ixz><iyy>0.0002086</iyy><iyz>0</iyz><izz>0.0001927</izz></inertia></inertial><visual name="finger_l"><geometry><mesh><uri>model://x500_mydrone/meshes/gripper_finger_l.stl</uri></mesh></geometry><material><ambient>0.86 0.45 0.20 1</ambient><diffuse>0.86 0.45 0.20 1</diffuse></material></visual><collision name="finger_l_col"><geometry><mesh><uri>model://x500_mydrone/meshes/gripper_finger_l.stl</uri></mesh></geometry><surface><friction><ode><mu>0.3</mu><mu2>0.3</mu2></ode></friction></surface></collision></link>
+    <joint name="finger_l_joint" type="revolute"><pose>0.0 0.05 -0.1203 0 0 0</pose><parent>base_link</parent><child>gripper_finger_l</child><axis><xyz>1 0 0</xyz><limit><lower>-0.6</lower><upper>0.6</upper><effort>3</effort><velocity>3</velocity></limit><dynamics><damping>0.02</damping></dynamics></axis></joint>
+    <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController"><joint_name>finger_l_joint</joint_name><topic>/gripper/finger_l</topic><p_gain>5</p_gain><i_gain>0.5</i_gain><d_gain>0.1</d_gain><i_max>0.5</i_max><i_min>-0.5</i_min><cmd_max>2</cmd_max><cmd_min>-2</cmd_min><initial_position>-0.17</initial_position></plugin>
+    <link name="gripper_finger_r"><pose relative_to="base_link">0 0 0 0 0 0</pose><inertial><pose>-0.0001 -0.1324 -0.1588 0 0 0</pose><mass>0.0761</mass><inertia><ixx>0.0002722</ixx><ixy>0</ixy><ixz>0</ixz><iyy>0.0002113</iyy><iyz>0</iyz><izz>0.0001907</izz></inertia></inertial><visual name="finger_r"><geometry><mesh><uri>model://x500_mydrone/meshes/gripper_finger_r.stl</uri></mesh></geometry><material><ambient>0.86 0.45 0.20 1</ambient><diffuse>0.86 0.45 0.20 1</diffuse></material></visual><collision name="finger_r_col"><geometry><mesh><uri>model://x500_mydrone/meshes/gripper_finger_r.stl</uri></mesh></geometry><surface><friction><ode><mu>0.3</mu><mu2>0.3</mu2></ode></friction></surface></collision></link>
+    <joint name="finger_r_joint" type="revolute"><pose>0.0 -0.05 -0.1203 0 0 0</pose><parent>base_link</parent><child>gripper_finger_r</child><axis><xyz>1 0 0</xyz><limit><lower>-0.6</lower><upper>0.6</upper><effort>3</effort><velocity>3</velocity></limit><dynamics><damping>0.02</damping></dynamics></axis></joint>
+    <plugin filename="gz-sim-joint-position-controller-system" name="gz::sim::systems::JointPositionController"><joint_name>finger_r_joint</joint_name><topic>/gripper/finger_r</topic><p_gain>5</p_gain><i_gain>0.5</i_gain><d_gain>0.1</d_gain><i_max>0.5</i_max><i_min>-0.5</i_min><cmd_max>2</cmd_max><cmd_min>-2</cmd_min><initial_position>0.17</initial_position></plugin>
+    <plugin filename="gz-sim-detachable-joint-system" name="gz::sim::systems::DetachableJoint"><parent_link>base_link</parent_link><child_model>parcel_H</child_model><child_link>link</child_link><detach_topic>/parcel_H/detach</detach_topic><attach_topic>/parcel_H/attach</attach_topic><output_topic>/parcel_H/state</output_topic></plugin>
+    <plugin filename="gz-sim-detachable-joint-system" name="gz::sim::systems::DetachableJoint"><parent_link>base_link</parent_link><child_model>parcel</child_model><child_link>link</child_link><detach_topic>/parcel/detach</detach_topic><attach_topic>/parcel/attach</attach_topic><output_topic>/parcel/state</output_topic></plugin>
+    <!-- gripper end -->
   </model>
 </sdf>

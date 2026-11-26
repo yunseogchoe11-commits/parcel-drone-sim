@@ -70,7 +70,7 @@ def wrap180(a):
 
 
 def to_en(hall_xy):
-    """강당 좌표 → (동, 북), 원점 = H."""
+    """강당 좌표 → (동, 북), 원점 = H (= 월드 원점 = Gazebo 정답 위치의 원점)."""
     return hall_xy[0] - C.H[0], hall_xy[1] - C.H[1]
 
 
@@ -92,6 +92,8 @@ def main():
     tt = (tru["timestamp"] - t0) / 1e6
     te = (est["timestamp"] - t0) / 1e6
     ex = np.interp(tt, te, est["x"]); ey = np.interp(tt, te, est["y"]); ez = np.interp(tt, te, est["z"])
+    s = getattr(C, "S", C.H)          # 추정 위치의 원점 = 드론 출발 자리 S → H 기준으로 옮김 (11/26: S = H 뒤 1 m)
+    ex, ey = ex + (s[1] - C.H[1]), ey + (s[0] - C.H[0])
     tx, ty, tz = tru["x"].astype(float), tru["y"].astype(float), tru["z"].astype(float)
 
     # 이륙 시점과 기준점(이륙 직전 바닥)
